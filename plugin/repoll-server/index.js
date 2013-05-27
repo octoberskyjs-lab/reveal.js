@@ -13,7 +13,6 @@ var opts = {
   baseDir: __dirname + '/../../'
 };
 
-
 var path = {
       root: opts.baseDir,
       noteDir: opts.baseDir + 'plugin/notes-server/',
@@ -30,17 +29,17 @@ var cacheItem = function(item, cache, callback) {
   }
 
   if (callback) callback();
-}
+};
 
 sio.configure(function() {
   sio.set('log level', 1);
-  sio.set('transports', [
-    'websocket'
-    ,'flashsocket'
-    ,'htmlfile'
-    ,'xhr-polling'
-    ,'jsonp-polling'
-  ]);
+//  sio.set('transports', [
+//    'websocket'
+//    ,'flashsocket'
+//    ,'htmlfile'
+//    ,'xhr-polling'
+//    ,'jsonp-polling'
+//  ]);
 });
 
 // we need some verification for master. maybe...
@@ -56,7 +55,7 @@ sio.of('/master').on('connection', function(master) {
     isMasterReady = false;
     chartData = {};
     console.log('master disconnected');
-    _.each(clients, function(client, id) { 
+    _.each(clients, function(client) {
       client.emit('master_lost', {});
     });
   });

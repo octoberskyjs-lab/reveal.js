@@ -2,16 +2,32 @@
   "use strict";
 
   var doc = WINDOW.document,
+      sio,
       // localhost
       pollServer = "",
       templateSource = $('#vote-template').html(),
       voteTemplate   = Handlebars.compile(templateSource),
       E = {
-        title: ".jumbotron h2",
-        voteButtons: "marketing",
-        submit: ".btn.btn-large.span12"
+        voteButtons: ".marketing",
+        submit: ".marketing .vote-item"
       };
 
+  var getRandomColorHex = function() {
+    var list1 = "0123456789ABCDEF",
+        list2 = "FEDCBA9876543210",
+        ch;
+    var bg = Math.floor(Math.random()*16777215).toString(16),
+        text = "";
+    for(var i=0;i<bg.length;i++) {
+      ch = bg.charAt(i);
+      for(var n=0;n<bg.length;n++) {
+        if(ch === list1.charAt(n)) {
+          text += list2.charAt(n);
+        }
+      }
+    }
+    return [ bg, text ];
+  };
   var masterNotReady = function() {
     console.log('master not ready');
     E.title.text('No Polls Yet...');
@@ -20,26 +36,25 @@
   };
 
   var masterReady = function(chartData) {
-    E.title.text('Pick what you want!');
-
     if (E.voteButtons.children().length >= 1) {
       E.submit.remove();
     }
-
+    chartData.options.forEach(function(v) {
+      var c = getRandomColorHex();
+      v.color = "#" + c[0];
+      v.fcolor = "#" + c[1];
+    });
     E.voteButtons.append(voteTemplate(chartData));
-
     E.voteButtons.show();
-    E.submit.on('click', function(e) {
-      e.preventDefault();
-      console.log('btn clicked!');
-      var index = $(this).data('index');
-      sio.emit('client_vote', {selected:index});
 
+    E.voteButtons.on('click', ".vote-item", function(e) {
+      e.preventDefault();
+      sio.emit('client_vote', {selected:$(this).data('index')});
     });
   };
 
   var connect = function(callback) {
-    var sio = io.connect(pollServer + '/client');
+    sio = io.connect(pollServer + '/client');
 
     sio.on('connect', function() {
       console.log('socket.io connected');
@@ -50,9 +65,7 @@
         masterNotReady();
         return;
       }
-
       console.log('master ready to vote with data!!');
-      console.dir(chartData);
       masterReady(chartData);
     });
 
