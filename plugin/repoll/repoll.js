@@ -57,15 +57,16 @@
   "use strict";
 
   var W = window;
-	    //isEnabled = true;
+      //isEnabled = true;
 
   W.repoll = (function() {
 
-		var pollServer = "",
+    var pollServer = "",
         server = "/master",
-        currentSlide;
+        currentSlide,
+        myChart = {};
 
-		var getSurveyInfo = function (slideEl) {
+    var getSurveyInfo = function (slideEl) {
 
       var titleEle = slideEl.querySelector(".repoll-title"),
           pollOptions = slideEl.querySelector(".repoll-options"),
@@ -73,17 +74,17 @@
 
       var opts = Array.prototype.slice.call(pollOptions.children);
 
-			return {
-				title : titleEle.innerHTML,
+      return {
+        title : titleEle.innerHTML,
         viewType: resultArea.dataset.viewType,
-				options : opts.map(function(v, i) {
+        options : opts.map(function(v, i) {
           return {
             text: v.innerHTML,
             index: i
           }
         })
-			};
-		};
+      };
+    };
 
     var connect = function(initData) {
 
@@ -99,59 +100,103 @@
       );
     };
 
-		var sendToServer = function (surveyInfo) {
+    var sendToServer = function (surveyInfo) {
       console.log("surveyInfo " + JSON.stringify(surveyInfo));
-			// 소켓 구현
+      // 소켓 구현
 
       connect(surveyInfo);
-		};
+    };
 
-		var listenToServer = function() {
-			// 소켓 받는다.
+    var listenToServer = function() {
+      // 소켓 받는다.
 
-			//render()
-		};
+      //render()
+    };
 
-		var render = function (data) {
-			var containerEl;
-			// 데이터 예시
-			// data = [
-			// 	"options1" : 2,
-			// 	"options2" : 2,
-			// 	"options3" : 2,
-			// 	"options4" : 2,
-			// 	"options5" : 2,
-			// 	"options6" : 2,
-			// 	"options6" : 2
-			// ];
+    var render = function (data) {
+      var chartElem = document.getElementById('myChart');
 
-			// repoll-result
-			containerEl	 = currentSlide.querySelector(".repoll-result");
+      var createChart = function(data){
+        var elemFrag = document.createDocumentFragment();
+        for(var key in data){
+          var tempElem = createDOMObject('div',nodeId(key));
+          tempElem.appendChild(createDOMObject('p',nodeId(key,'R')));
+          tempElem.appendChild(createDOMObject('p',nodeId(key,'L')));
+          elemFrag.appendChild(tempElem);
+        }
+        chartElem.appendChild(elemFrag);
+        updateChart(data);
+      };
 
-			// ?????.render(contains,data);
-		};
+      var updateChart = function(data){
+        // var dataSum = data.reduce(function(a,b){return a + b},0); //배열로 어떻게 바꾸더라...ㅠㅠ
+        var dataSum = 0;
+        for(var key in data){dataSum += data[key];}
+        for(var key in data){
+          var prop = data[key]/dataSum,
+              deg = Math.round(prop * 3.6);
 
-		var init = function(slide) {
-			currentSlide = slide;
-			sendToServer(getSurveyInfo(currentSlide));
-			listenToServer();
-		};
+        }
 
-		return {
-			init : init
-		};
+      };
 
-	})();
+      var createDOMObject = function( tagName, id, className, textNode){
+        var tempObject = document.createElement(tagName);
+        if(id) tempObject.id = id;
+        if(className) tempObject.setAttribute('class', className);
+        if(textNode) tempObject.innerHTML(textNode);
+        return tempObject;
+      };
 
-	if (Reveal.getCurrentSlide().classList.contains("repoll")) {
-		repoll.init(Reveal.getCurrentSlide());
-	}
+      var nodeId = function(str, direction){
+        var returnValue = 'piece-' + str;
+        returnValue += !direction ? '' : '-' + direction;
+        return returnValue;
+      }
 
-	Reveal.addEventListener( 'slidechanged', function( event ) {
+      // define method Create or Update
+      if(!myChart.length) createChart(data);
+      else updateChart(data);
+
+      // 데이터 예시
+      // data = [
+      //  "options1" : 2,
+      //  "options2" : 2,
+      //  "options3" : 2,
+      //  "options4" : 2,
+      //  "options5" : 2,
+      //  "options6" : 2,
+      //  "options6" : 2
+      // ];
+
+      // repoll-result
+      // containerEl   = currentSlide.querySelector(".repoll-result");
+
+      // ?????.render(contains,data);
+    };
+
+    var init = function(slide) {
+      currentSlide = slide;
+      sendToServer(getSurveyInfo(currentSlide));
+      listenToServer();
+    };
+
+    return {
+      init : init,
+      render : render
+    };
+
+  })();
+
+  if (Reveal.getCurrentSlide().classList.contains("repoll")) {
+    repoll.init(Reveal.getCurrentSlide());
+  }
+
+  Reveal.addEventListener( 'slidechanged', function( event ) {
     if(event.currentSlide.classList.contains("repoll")){
-    	repoll.init(Reveal.getCurrentSlide());
+      repoll.init(Reveal.getCurrentSlide());
     }
-	});
+  });
 
   Reveal.addEventListener( 'overviewshown', function(event) { } );
   Reveal.addEventListener( 'overviewhidden', function(event) { } );
