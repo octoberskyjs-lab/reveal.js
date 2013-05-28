@@ -9,7 +9,8 @@
       voteTemplate   = Handlebars.compile(templateSource),
       E = {
         voteButtons: ".marketing",
-        submit: ".marketing .vote-item"
+        submit: ".marketing .vote-item",
+        title: "h1"
       };
 
   var getRandomColorHex = function() {
